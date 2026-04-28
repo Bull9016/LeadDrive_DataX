@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeadDrive - Modern CRM SaaS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0F172A; /* Extremely modern, dark tech theme */
+            --accent: #2563EB; /* Bright Blue */
+            --bg: #F8FAFC;
+            --surface: #FFFFFF;
+            --border: #E2E8F0;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --success: #10B981;
+            --danger: #EF4444;
+            --hot-bg: #FEF2F2;
+        }
+
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text-main); }
+        
+        /* Sidebar */
+        .sidebar { width: 240px; background: #0F172A; display: flex; flex-direction: column; color: #FFFFFF; }
+        .logo { padding: 24px; font-weight: 700; font-size: 20px; display: flex; align-items: center; gap: 8px; color: #FFFFFF; border-bottom: 1px solid #1E293B; }
+        .logo i { color: #38BDF8; }
+        .nav-pt { padding: 16px; flex-grow: 1; }
+        .nav-item { padding: 12px 16px; border-radius: 6px; color: #94A3B8; cursor: pointer; transition: 0.2s; font-weight: 500; font-size: 14px; margin-bottom: 4px; display: flex; align-items: center; gap: 12px; }
+        .nav-item:hover, .nav-item.active { background: #1E293B; color: #38BDF8; font-weight: 600; }
+        .nav-item.active i { color: #38BDF8; }
+
+        /* Main Workspace */
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { height: 64px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+        .content-area { flex: 1; padding: 32px; overflow-y: auto; display: none; }
+        .content-area.active { display: block; }
+        
+        /* Typography & Globals */
+        h1 { font-size: 24px; font-weight: 700; margin: 0 0 8px 0; }
+        p.sub { color: var(--text-muted); font-size: 14px; margin: 0 0 24px 0; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        
+        /* Buttons */
+        .btn { padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); background: white; transition: 0.15s; }
+        .btn:hover { background: #F8FAFC; }
+        .btn-primary { background: var(--accent); color: white; border: none; }
+        .btn-primary:hover { background: #1D4ED8; }
+        .btn-danger { color: var(--danger); border-color: var(--danger); background: #FEF2F2; }
+
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .badge.hot { background: #DC2626; color: white; }
+        .badge.warm { background: #F59E0B; color: white; }
+        .badge.cold { background: #94A3B8; color: white; }
+        .tag-source { background: #F1F5F9; color: #475569; border-radius: 12px; padding: 2px 10px; font-size: 11px; font-weight: 500; border: 1px solid #E2E8F0; }
+
+        /* Dashboard */
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px; }
+        .kpi-val { font-size: 32px; font-weight: 700; margin: 8px 0; }
+        
+        /* Listing Data Table */
+        .search-filters { display: flex; gap: 16px; margin-bottom: 24px; }
+        .search-filters input, .search-filters select { padding: 10px 16px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th, td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+        th { color: var(--text-muted); font-weight: 600; background: #F8FAFC; text-transform: uppercase; font-size: 11px; }
+        .row-hover:hover { background: #FAFAFA; }
+        .row-hover:hover .quick-actions { opacity: 1; pointer-events: auto; }
+        .row-hot { background: #FEF2F2; } /* Hot leads slight background */
+        .quick-actions { opacity: 0; pointer-events: none; transition: 0.2s; display: flex; gap: 8px; }
+
+        /* Kanban */
+        .kanban { display: flex; gap: 24px; overflow-x: auto; height: calc(100vh - 160px); }
+        .kanban-col { min-width: 280px; background: #F1F5F9; border-radius: 12px; display: flex; flex-direction: column; padding: 16px; }
+        .k-header { font-weight: 600; font-size: 14px; margin-bottom: 16px; display: flex; justify-content: space-between; }
+        .k-card { background: white; padding: 16px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 12px; border-left: 3px solid var(--accent); }
+        .k-card.overdue { border-left-color: var(--danger); border: 1px solid #FECACA; }
+
+        /* Lead Details: 3 Columns */
+        .details-grid { display: grid; grid-template-columns: 280px 1fr 280px; gap: 24px; height: calc(100vh - 180px); }
+        .profile-pane, .timeline-pane, .actions-pane { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 24px; overflow-y: auto; }
+        
+        /* Timeline inside Details */
+        .t-item { display: flex; gap: 16px; margin-bottom: 24px; position: relative; }
+        .t-item::before { content:''; position: absolute; left: 15px; top: 30px; bottom: -30px; width: 2px; background: var(--border); }
+        .t-item:last-child::before { display: none; }
+        .t-icon { width: 32px; height: 32px; border-radius: 50%; background: #F1F5F9; display: flex; align-items: center; justify-content: center; z-index: 2; color: var(--text-muted); font-size: 12px;}
+        .t-time { font-size: 11px; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; }
+        .t-content { flex: 1; border: 1px solid var(--border); padding: 12px; border-radius: 8px; font-size: 13px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-gauge-high"></i> LeadDrive</div>
+        <div class="nav-pt">
+            <div class="nav-item active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-line"></i> Dashboard</div>
+            <div class="nav-item" onclick="switchTab('listing', this)"><i class="fa-solid fa-list"></i> Lead Listing</div>
+            <div class="nav-item" onclick="switchTab('kanban', this)"><i class="fa-solid fa-table-columns"></i> Lead Management</div>
+            <div class="nav-item" onclick="switchTab('details', this)"><i class="fa-solid fa-address-card"></i> Lead Details</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div style="font-weight: 500; color: var(--text-muted);">Good Morning, <strong>Sales Manager</strong></div>
+            <div style="display:flex; gap:16px;">
+                <button class="btn"><i class="fa-solid fa-bell"></i></button>
+                <button class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Lead</button>
+            </div>
+        </div>
+
+        <!-- 1. DASHBOARD -->
+        <div id="dashboard" class="content-area active">
+            <h1>Analytics Dashboard</h1>
+            <p class="sub">Monitor high-level source attribution and sales pipeline performance.</p>
+
+            <div class="kpi-grid">
+                <div class="card">
+                    <div style="font-size:13px; color:var(--text-muted); font-weight:600;">TOTAL LEADS THIS MONTH</div>
+                    <div class="kpi-val">1,248</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:13px; color:var(--text-muted); font-weight:600;">CONVERSION RATE</div>
+                    <div class="kpi-val">18.5%</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:13px; color:var(--text-muted); font-weight:600;">🔥 HOT LEADS WAITING</div>
+                    <div class="kpi-val">42</div>
+                </div>
+                <div class="card">
+                    <div style="font-size:13px; color:var(--text-muted); font-weight:600;">AVG RESPONSE TIME</div>
+                    <div class="kpi-val">14m</div>
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+                <div class="card">
+                    <h3 style="margin-bottom:16px;">Conversion Funnel</h3>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <div style="background:#0F172A; color:white; padding:12px; border-radius:4px; font-size:13px; display:flex; justify-content:space-between;"><span>New Leads</span> <span>100% (1,248)</span></div>
+                        <div style="background:#334155; color:white; padding:12px; border-radius:4px; font-size:13px; width:85%; display:flex; justify-content:space-between;"><span>Contacted</span> <span>85% (1,060)</span></div>
+                        <div style="background:#475569; color:white; padding:12px; border-radius:4px; font-size:13px; width:65%; display:flex; justify-content:space-between;"><span>Qualified</span> <span>65% (811)</span></div>
+                        <div style="background:#64748B; color:white; padding:12px; border-radius:4px; font-size:13px; width:40%; display:flex; justify-content:space-between;"><span>Test Drive</span> <span>40% (499)</span></div>
+                        <div style="background:#94A3B8; color:#0F172A; padding:12px; border-radius:4px; font-size:13px; width:18%; display:flex; justify-content:space-between; font-weight:bold;"><span>Won</span> <span>18.5% (230)</span></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:16px;">Team Performance SLA</h3>
+                    <table style="width:100%; border:none; border-collapse:collapse;">
+                        <tr style="border-bottom:1px solid var(--border);"><th style="padding:8px 0; background:white;">Rep Name</th><th style="padding:8px 0; background:white;">Leads Assigned</th><th style="padding:8px 0; background:white;">Completed</th></tr>
+                        <tr style="border-bottom:1px solid var(--border);"><td style="padding:12px 0;">Arjun Sharma</td><td style="padding:12px 0;">145</td><td style="padding:12px 0; color:var(--success); font-weight:600;">120</td></tr>
+                        <tr style="border-bottom:1px solid var(--border);"><td style="padding:12px 0;">Priya Singh</td><td style="padding:12px 0;">130</td><td style="padding:12px 0; color:var(--success); font-weight:600;">125</td></tr>
+                        <tr><td style="padding:12px 0;">Vikram L.</td><td style="padding:12px 0;">80</td><td style="padding:12px 0; color:var(--danger); font-weight:600;">40 (Action Needed)</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. LEAD LISTING -->
+        <div id="listing" class="content-area">
+            <h1>Lead Master List</h1>
+            <p class="sub">Filter, prioritize, and execute inline actions to smash your SLA times.</p>
+            
+            <div class="search-filters">
+                <input type="text" placeholder="Search name, phone, email..." style="width: 250px;">
+                <select><option>Source: All</option><option>Facebook Ads</option><option>Google Search</option><option>Twitter</option><option>Website</option><option>Offline Event</option></select>
+                <select><option>Status: Open</option></select>
+                <select><option>Date: Today</option></select>
+                <button class="btn btn-primary" style="margin-left:auto;">Apply Sort: Priority</button>
+            </div>
+
+            <div class="card" style="padding:0; overflow:hidden;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Lead Info</th>
+                            <th>Priority Score</th>
+                            <th>Status & Follow-up</th>
+                            <th>Assigned To</th>
+                            <th style="text-align:right;">Quick Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Hot Lead -->
+                        <tr class="row-hover row-hot">
+                            <td>
+                                <div style="font-weight:600; font-size:14px; color:var(--text-main);">Rajesh Kumar</div>
+                                <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">+91 98765 43210</div>
+                                <div class="tag-source" style="margin-top:6px; display:inline-block;"><i class="fa-brands fa-facebook" style="color:#1877F2"></i> FB Retargeting</div>
+                            </td>
+                            <td><span class="badge hot">🔥 Hot Lead</span></td>
+                            <td>
+                                <div style="color:var(--danger); font-weight:600; font-size:12px;"><i class="fa-solid fa-triangle-exclamation"></i> Follow-up overdue (2 days)</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">In System: New</div>
+                            </td>
+                            <td>Arjun S.</td>
+                            <td style="text-align:right;">
+                                <div class="quick-actions" style="justify-content:flex-end;">
+                                    <button class="btn"><i class="fa-solid fa-phone"></i> Call</button>
+                                    <button class="btn"><i class="fa-solid fa-check"></i> Contacted</button>
+                                    <button class="btn"><i class="fa-solid fa-ban"></i> Drop</button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Warm Lead -->
+                        <tr class="row-hover">
+                            <td>
+                                <div style="font-weight:600; font-size:14px; color:var(--text-main);">Neha Sharma</div>
+                                <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">neha@example.com</div>
+                                <div class="tag-source" style="margin-top:6px; display:inline-block;"><i class="fa-brands fa-google" style="color:#EA4335"></i> Search Ad</div>
+                            </td>
+                            <td><span class="badge warm">Warm</span></td>
+                            <td>
+                                <div style="color:var(--text-main); font-weight:500; font-size:12px;">Contacted - Waiting for reply</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Last contacted: 2 hrs ago</div>
+                            </td>
+                            <td>Priya D.</td>
+                            <td style="text-align:right;">
+                                <div class="quick-actions" style="justify-content:flex-end;">
+                                    <button class="btn"><i class="fa-solid fa-calendar-check"></i> Test Drive</button>
+                                    <button class="btn"><i class="fa-solid fa-thumbs-up"></i> Qualified</button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Cold Lead -->
+                        <tr class="row-hover">
+                            <td>
+                                <div style="font-weight:600; font-size:14px; color:var(--text-main);">Aman Singh</div>
+                                <div style="color:var(--text-muted); font-size:12px; margin-top:4px;">080 4321 8765</div>
+                                <div class="tag-source" style="margin-top:6px; display:inline-block;"><i class="fa-solid fa-store"></i> Walk-in</div>
+                            </td>
+                            <td><span class="badge cold">Cold</span></td>
+                            <td>
+                                <div style="color:var(--text-main); font-weight:500; font-size:12px;">Qualified</div>
+                                <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Last contacted: 4 days ago</div>
+                            </td>
+                            <td>Vikram L.</td>
+                            <td style="text-align:right;">
+                                <div class="quick-actions" style="justify-content:flex-end;">
+                                    <button class="btn"><i class="fa-solid fa-phone"></i> Call</button>
+                                    <button class="btn"><i class="fa-solid fa-envelope"></i> Email</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. KANBAN -->
+        <div id="kanban" class="content-area">
+            <h1>Lead Management</h1>
+            <p class="sub">Drag and drop leads across pipeline stages. Urgency indicators flag every overdue follow-up automatically.</p>
+            
+            <div class="kanban">
+                <div class="kanban-col">
+                    <div class="k-header"><span>New</span> <span style="background:#CBD5E1; border-radius:10px; padding:2px 8px; font-size:11px;">1</span></div>
+                    <div class="k-card overdue">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge hot" style="font-size:10px; padding:2px 6px;">🔥 Hot</span>
+                            <span style="font-size:11px; color:var(--danger); font-weight:bold;">Overdue (2 Days)</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Rajesh Kumar</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Hyundai Creta (Top Model)</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-phone"></i> Call Now</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kanban-col">
+                    <div class="k-header"><span>Contacted</span> <span style="background:#CBD5E1; border-radius:10px; padding:2px 8px; font-size:11px;">1</span></div>
+                    <div class="k-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge warm" style="font-size:10px; padding:2px 6px;">Warm</span>
+                            <span style="font-size:11px; color:var(--text-muted);">2h ago</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Neha Sharma</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Left Voicemail</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-arrow-right"></i> Qualify</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kanban-col">
+                    <div class="k-header"><span>Qualified</span> <span style="background:#CBD5E1; border-radius:10px; padding:2px 8px; font-size:11px;">2</span></div>
+                    <div class="k-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge warm" style="font-size:10px; padding:2px 6px;">Warm</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Yesterday</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Vikram Singh</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Honda City (Manual)</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-calendar-check"></i> Book Drive</button>
+                        </div>
+                    </div>
+                    <div class="k-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge cold" style="font-size:10px; padding:2px 6px;">Cold</span>
+                            <span style="font-size:11px; color:var(--text-muted);">3 days ago</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Arjun Mehta</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Maruti Swift</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-envelope"></i> Send Email</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="kanban-col">
+                    <div class="k-header"><span>Test Drive</span> <span style="background:#CBD5E1; border-radius:10px; padding:2px 8px; font-size:11px;">2</span></div>
+                    <div class="k-card overdue">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge hot" style="font-size:10px; padding:2px 6px;">🔥 Hot</span>
+                            <span style="font-size:11px; color:var(--danger); font-weight:bold;">SLA Missed</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Kavita Reddy</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Jeep Compass Auto</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn btn-primary" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-handshake"></i> Start Negotiation</button>
+                        </div>
+                    </div>
+                    <div class="k-card">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge hot" style="font-size:10px; padding:2px 6px;">🔥 Hot</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Scheduled Today</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Amit Agarwal</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Hyundai Tucson</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-car"></i> Log Feedback</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="kanban-col">
+                    <div class="k-header"><span>Closed Won</span> <span style="background:#CBD5E1; border-radius:10px; padding:2px 8px; font-size:11px;">1</span></div>
+                    <div class="k-card" style="border-left-color: var(--success);">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span class="badge warm" style="font-size:10px; padding:2px 6px; background:var(--success);">Won</span>
+                            <span style="font-size:11px; color:var(--text-muted);">Today 9AM</span>
+                        </div>
+                        <div style="font-weight:600; font-size:14px;">Suresh Pillai</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Kia Seltos (GT Line)</div>
+                        <div style="margin-top:12px; display:flex; gap:8px;">
+                            <button class="btn" style="flex:1; justify-content:center; padding:6px; font-size:11px;"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 4. LEAD DETAILS: 3-Column Structured Layout -->
+        <div id="details" class="content-area">
+            <h1 style="display:flex; align-items:center; gap:16px;">
+                <button class="btn" style="padding:6px; border:none;" onclick="switchTab('listing', document.querySelectorAll('.nav-item')[1])"><i class="fa-solid fa-arrow-left"></i></button>
+                Lead Details #LD-8942
+            </h1>
+            <p class="sub" style="margin-left:42px;">Full customer intelligence and timeline.</p>
+
+            <div class="details-grid">
+                
+                <!-- Left: Customer Info -->
+                <div class="profile-pane">
+                    <h3 style="font-size:14px; color:var(--text-muted); text-transform:uppercase; margin-bottom:16px;">Customer Details</h3>
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:24px;">
+                        <img src="https://ui-avatars.com/api/?name=Rajesh+Kumar&background=2563EB&color=fff&size=50" style="border-radius:50%;">
+                        <div>
+                            <div style="font-weight:700; font-size:16px;">Rajesh Kumar</div>
+                            <span class="badge hot" style="margin-top:4px; font-size:10px;">🔥 Hot Status</span>
+                        </div>
+                    </div>
+                    
+                    <div style="font-size:13px; margin-bottom:16px;">
+                        <div style="color:var(--text-muted); font-weight:600; margin-bottom:4px;">Phone</div>
+                        <div style="font-weight:500;">+91 98765 43210</div>
+                    </div>
+                    <div style="font-size:13px; margin-bottom:16px;">
+                        <div style="color:var(--text-muted); font-weight:600; margin-bottom:4px;">Email</div>
+                        <div style="font-weight:500;">rajesh.k@example.com</div>
+                    </div>
+                    <div style="font-size:13px; margin-bottom:16px;">
+                        <div style="color:var(--text-muted); font-weight:600; margin-bottom:4px;">Vehicle of Interest</div>
+                        <div style="font-weight:500; background:#F1F5F9; padding:8px; border-radius:6px; margin-top:4px;">Hyundai Creta (Automatic Top Model)</div>
+                    </div>
+                    
+                    <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+                        <div style="font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:8px;">ATTRIBUTION</div>
+                        <div class="tag-source"><i class="fa-brands fa-facebook" style="color:#1877F2"></i> FB Ad: "Diwali Offer"</div>
+                    </div>
+                </div>
+
+                <!-- Center: Activity Timeline -->
+                <div class="timeline-pane">
+                    <h3 style="font-size:14px; color:var(--text-muted); text-transform:uppercase; margin-bottom:24px;">Activity Timeline</h3>
+                    
+                    <div class="t-item">
+                        <div class="t-icon" style="background:#FEF2F2; color:var(--danger);"><i class="fa-solid fa-phone"></i></div>
+                        <div class="t-content" style="border-color:#FECACA;">
+                            <div class="t-time">10:30 AM Today</div>
+                            <div style="font-weight:600; color:var(--text-main);">Called (No Response)</div>
+                            <div style="color:var(--text-muted); margin-top:4px;">Tried reaching out but it went straight to voicemail. Left a message.</div>
+                        </div>
+                    </div>
+
+                    <div class="t-item">
+                        <div class="t-icon" style="background:#F1F5F9;"><i class="fa-solid fa-robot"></i></div>
+                        <div class="t-content">
+                            <div class="t-time">Yesterday, 4:00 PM</div>
+                            <div style="font-weight:600; color:var(--text-main);">Automated WhatsApp Brochure Sent</div>
+                            <div style="color:var(--text-muted); margin-top:4px;">System detected SUV interest. Fired interactive PDF.</div>
+                        </div>
+                    </div>
+
+                    <div class="t-item">
+                        <div class="t-icon" style="background:#F1F5F9;"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="t-content">
+                            <div class="t-time">2 Days Ago, 10:20 AM</div>
+                            <div style="font-weight:600; color:var(--text-main);">Lead Created via Facebook</div>
+                            <div style="color:var(--text-muted); margin-top:4px;">Imported context: Interested in SUV under 15L.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Actions -->
+                <div class="actions-pane">
+                    <h3 style="font-size:14px; color:var(--text-muted); text-transform:uppercase; margin-bottom:16px;">Quick Actions</h3>
+                    
+                    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:32px;">
+                        <button class="btn btn-primary" style="justify-content:center; padding:12px;"><i class="fa-solid fa-phone"></i> Log Call</button>
+                        <button class="btn" style="justify-content:center; padding:12px;"><i class="fa-solid fa-note-sticky"></i> Add Note</button>
+                        <button class="btn" style="justify-content:center; padding:12px;"><i class="fa-solid fa-clock"></i> Schedule Follow-up</button>
+                    </div>
+
+                    <h3 style="font-size:14px; color:var(--text-muted); text-transform:uppercase; margin-bottom:16px;">Update Status</h3>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <button class="btn" style="justify-content:flex-start;"><i class="fa-solid fa-check" style="width:20px;"></i> Mark Contacted</button>
+                        <button class="btn" style="justify-content:flex-start;"><i class="fa-solid fa-thumbs-up" style="width:20px;"></i> Mark Qualified</button>
+                        <button class="btn btn-danger" style="justify-content:flex-start; margin-top:16px;"><i class="fa-solid fa-xmark" style="width:20px;"></i> Not Interested / Drop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(screenId, navEl) {
+            document.querySelectorAll('.content-area').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if (navEl) navEl.classList.add('active');
+        }
+    </script>
+</body>
+</html>
